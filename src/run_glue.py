@@ -305,6 +305,14 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
 
     model, tokenizer = create_model(num_labels, model_args, data_args, ue_args, config)
 
+    ################ Adapters ############################
+    if config.get('adapters'):
+        from transformers.adapters import AdapterConfig
+        adapter_config = hydra.utils.instantiate(config.adapters.args)
+        model.add_adapter(config.adapters.name, config=adapter_config)
+        model.train_adapter(config.adapters.name)
+        model.set_active_adapters(config.adapters.name)
+
     ################ Preprocessing the dataset ###########
 
     sentence1_key, sentence2_key = task_to_keys[data_args.task_name]
