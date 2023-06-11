@@ -8,6 +8,8 @@ from ue4nlp.transformers_regularized import (
     SelectiveTrainer,
     SNGPTrainer,
     SelectiveSNGPTrainer,
+    AdaptersSelectiveTrainer,
+    AdaptersSelectiveSNGPTrainer,
 )
 
 
@@ -20,29 +22,51 @@ def get_trainer(
     train_dataset,
     eval_dataset,
     metric_fn,
+    use_adapters: bool = False,
     data_collator=None,
 ) -> "Trainer":
     training_args.save_total_limit = 1
     training_args.save_steps = 1e5
     training_args.task = task
+
     if not use_selective and not use_sngp:
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            compute_metrics=metric_fn,
-            data_collator=data_collator,
-        )
-    elif use_sngp:
-        if use_selective:
-            trainer = SelectiveSNGPTrainer(
+        if use_adapters:
+            from transformers.adapters import AdapterTrainer
+            trainer = AdapterTrainer(
                 model=model,
                 args=training_args,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
                 compute_metrics=metric_fn,
+                data_collator=data_collator,
             )
+        else:
+            trainer = Trainer(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                compute_metrics=metric_fn,
+                data_collator=data_collator,
+            )
+    elif use_sngp:
+        if use_selective:
+            if use_adapters:
+                trainer = AdaptersSelectiveSNGPTrainer(
+                    model=model,
+                    args=training_args,
+                    train_dataset=train_dataset,
+                    eval_dataset=eval_dataset,
+                    compute_metrics=metric_fn,
+                )
+            else:
+                trainer = SelectiveSNGPTrainer(
+                    model=model,
+                    args=training_args,
+                    train_dataset=train_dataset,
+                    eval_dataset=eval_dataset,
+                    compute_metrics=metric_fn,
+                )
         else:
             trainer = SNGPTrainer(
                 model=model,
@@ -53,13 +77,22 @@ def get_trainer(
                 data_collator=data_collator,
             )
     elif use_selective:
-        trainer = SelectiveTrainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            compute_metrics=metric_fn,
-        )
+        if use_adapters:
+            trainer = AdaptersSelectiveTrainer(
+                    model=model,
+                    args=training_args,
+                    train_dataset=train_dataset,
+                    eval_dataset=eval_dataset,
+                    compute_metrics=metric_fn,
+                )
+        else:
+            trainer = SelectiveTrainer(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                compute_metrics=metric_fn,
+            )
     return trainer
 
 
