@@ -1,0 +1,1 @@
+srun --mem=128gb -c 32 -G 3 -n 1 --container-image=artifactory.mts.ai#ml-docker/ue_transformers --container-name=ue_transformers --no-container-entrypoint --pty /bin/bash
