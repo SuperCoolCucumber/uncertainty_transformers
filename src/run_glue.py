@@ -302,16 +302,22 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
     log.info(f"Number of labels: {num_labels}")
 
     ################ Loading model #######################
-
+    if config.get('adapters') and config.do_eval:
+        checkpoint_dir = model_args['model_name_or_path'] 
+        model_args['model_name_or_path'] = 'microsoft/deberta-base'# TODO be careful set it up from the settings
     model, tokenizer = create_model(num_labels, model_args, data_args, ue_args, config)
-
     ################ Adapters ############################
     if config.get('adapters'):
-        from transformers.adapters import AdapterConfig
-        adapter_config = hydra.utils.instantiate(config.adapters.args)
-        model.add_adapter(config.adapters.name, config=adapter_config)
-        model.train_adapter(config.adapters.name)
+        if config.do_train:
+            adapter_config = hydra.utils.instantiate(config.adapters.args)
+            model.add_adapter(config.adapters.name, config=adapter_config)
+            model.train_adapter(config.adapters.name)
+        elif config.do_eval:
+            model.load_adapter(checkpoint_dir + '/' + config.adapters.name)
+        else:
+            raise NotImplementedError
         model.set_active_adapters(config.adapters.name)
+
 
     ################ Preprocessing the dataset ###########
 
@@ -468,7 +474,8 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
         training_args,
         train_dataset,
         eval_dataset,
-        metric_fn
+        metric_fn,
+        use_adapters=True if config.get('adapters') else False
     )
     if config.do_train:
         start = time.time()
@@ -483,6 +490,7 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
         if config.do_eval:
             evaluation_metrics = trainer.evaluate()
         trainer.save_model(work_dir)
+
         tokenizer.save_pretrained(work_dir)
 
     #################### Predicting ##########################
@@ -555,7 +563,6 @@ def main(config):
 
     args_data = DataTrainingArguments(task_name=config.data.task_name)
     args_data = update_config(args_data, config.data)
-    
     if config.do_train and not config.do_eval:
         filename = "pytorch_model.bin"
     else:
