@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss, MSELoss, BCELoss, BCEWithLogitsLoss
 import torch.nn.functional as F
+from torch.nn.parallel import DistributedDataParallel
 
 from utils.utils_sngp import SNGPTrainer
 
@@ -174,6 +175,8 @@ class SelectiveTrainer(Trainer):
         self.unc_threshold = unc_threshold
 
     def compute_loss(self, model, inputs, return_outputs=False):
+        if type(model) is DistributedDataParallel:
+            model = model.module
         labels = inputs.pop("labels")
         output_hidden_states = True if self.reg_type == "metric" else False
         outputs = model(**inputs, output_hidden_states=output_hidden_states)
