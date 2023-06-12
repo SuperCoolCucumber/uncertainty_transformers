@@ -295,7 +295,18 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
 
     ################ Loading model #######################
 
-    model, tokenizer = create_model(num_labels, model_args, data_args, ue_args, config)
+    if config.get('adapters'):
+        checkpoint_dir = model_args['model_name_or_path'] 
+        model, tokenizer = create_model(num_labels, model_args, data_args, ue_args, config)
+    model_args['model_name_or_path'] = 'microsoft/deberta-base'# TODO be careful set it up from the settings
+
+    ################ Adapters ############################
+    if config.get('adapters'):
+
+        adapter_config = hydra.utils.instantiate(config.adapters.args)
+        model.add_adapter(config.adapters.name, config=adapter_config)
+        model.train_adapter(config.adapters.name)
+        model.set_active_adapters(config.adapters.name)
 
     ################ Preprocessing the dataset ###########
 
@@ -413,6 +424,7 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
         )
     is_regression = False
 
+    accuracy_metric = load_metric("accuracy", keep_in_memory=True, cache_dir=config.cache_dir)
     metric_glue = deepcopy(metric)
     metric = config.metric if 'metric' in config.keys() else metric
     metric_fn = lambda p: compute_metrics(is_regression, metric, accuracy_metric, p)
@@ -504,6 +516,7 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
 
     #################### Predicting ##########################
 
+    log.info('******** Started prediction ********')
     if config.do_eval or config.do_ue_estimate:
         do_predict_eval(
             model,
