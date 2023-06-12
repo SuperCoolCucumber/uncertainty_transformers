@@ -149,8 +149,13 @@ def get_optimal_hyperparameters(
     hp_space = hp_space_continuous if use_continuous_distribution else hp_space_discrete
     if not(use_continuous_distribution) and hasattr(trainer.model, "mixup"):
         hp_space = hp_space_discrete_msd
-    if not(use_continuous_distribution) and hasattr(trainer.model.electra.encoder.layer[-1].attention.self, "hierarchial"):
+    if not(use_continuous_distribution) and (
+        hasattr(trainer.model.deberta.encoder.layer[-1].attention.self, "hierarchial") or
+        hasattr(trainer.model, "electra") and 
+        hasattr(trainer.model.electra.encoder.layer[-1].attention.self, "hierarchial") 
+        ):
         hp_space = hp_space_discrete_sto
+
 
     # set a sampler with the same seed as used in the trainer
     if use_sngp and task == "ood":
