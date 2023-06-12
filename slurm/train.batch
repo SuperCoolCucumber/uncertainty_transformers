@@ -15,4 +15,4 @@ srun --container-image=artifactory.mts.ai#ml-docker/ue_transformers \
 --container-name=ue_transformers\
 --no-container-entrypoint \
 --container-workdir=/home \
-bash ../scripts/ue_scripts/run_train_deberta_models_glue-mts.sh
+bash /home/dsgalimzya/uncertainty_transformers/scripts/ue_scripts/run_train_deberta_models_glue_mts.sh
