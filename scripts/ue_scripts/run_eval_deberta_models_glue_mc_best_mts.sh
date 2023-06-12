@@ -1,4 +1,4 @@
-cd ../../src
+cd /home/dsgalimzya/uncertainty_transformers/src
 
 HYDRA_CONFIG_PATH=../configs/run_tasks_for_model_series.yaml python run_tasks_for_model_series.py cuda_devices=[0] args='ue\=mc do_ue_estimate\=True ue.calibrate\=False data.validation_subsample\=0.0 ue.use_selective\=True ue.reg_type\=metric training\=electra_base ue.dropout_subs\=all ue.committee_size\=20 ue.inference_prob\=0.1 +adapters.name\=bottleneck_adapter' config_path=../configs/cola.yaml output_dir=../workdir/run_tasks_for_model_series/deberta_metric_no_sn/cola/0.0/mc_all/ model_series_dir=../workdir/run_train_models/deberta_metric_no_sn/cola/0.0/models/cola
 
