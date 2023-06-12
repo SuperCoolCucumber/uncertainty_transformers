@@ -15,4 +15,4 @@ srun --container-image=artifactory.mts.ai#ml-docker/ue_transformers \
 --container-name=ue_transformers\
 --no-container-entrypoint \
 --container-workdir=/home \
-bash /home/dsgalimzya/uncertainty_transformers/scripts/ue_scripts/deberta_hp_search.sh
+bash /home/dsgalimzya/uncertainty_transformers/scripts/ue_scripts/deberta_hp_search_mts.sh
