@@ -12,7 +12,7 @@ echo "port is $port"
 
 #Start the notebook
 srun --container-image=artifactory.mts.ai#ml-docker/ue_transformers \
---container-name=ue_transformers\
+--container-name=ue_transformers \
 --no-container-entrypoint \
 --container-workdir=/home \
 bash /home/dsgalimzya/uncertainty_transformers/scripts/ue_scripts/run_train_bert_model_glue_pfeiffer+houlsby.sh
