@@ -34,6 +34,7 @@ from transformers import (
     DebertaForSequenceClassification,
     RobertaForSequenceClassification,
     DistilBertForSequenceClassification,
+    BertForSequenceClassification
 )
 from ue4nlp.transformers_mixup import (
     ElectraForSequenceClassificationMSD,

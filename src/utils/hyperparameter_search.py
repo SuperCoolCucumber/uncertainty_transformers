@@ -150,9 +150,20 @@ def get_optimal_hyperparameters(
     if not(use_continuous_distribution) and hasattr(trainer.model, "mixup"):
         hp_space = hp_space_discrete_msd
     if not(use_continuous_distribution) and (
-        hasattr(trainer.model.deberta.encoder.layer[-1].attention.self, "hierarchial") or
-        hasattr(trainer.model, "electra") and 
-        hasattr(trainer.model.electra.encoder.layer[-1].attention.self, "hierarchial") 
+        (
+            hasattr(trainer.model, "deberta") and
+            hasattr(trainer.model.deberta.encoder.layer[-1].attention.self, "hierarchial")
+        )
+            or
+        (
+            hasattr(trainer.model, "electra") and 
+            hasattr(trainer.model.electra.encoder.layer[-1].attention.self, "hierarchial")
+        ) 
+            or
+        (
+            hasattr(trainer.model, "bert") and 
+            hasattr(trainer.model.bert.encoder.layer[-1].attention.self, "hierarchial")
+        )
         ):
         hp_space = hp_space_discrete_sto
 
