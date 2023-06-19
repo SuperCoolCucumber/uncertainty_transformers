@@ -28,7 +28,6 @@ def get_trainer(
     training_args.save_total_limit = 1
     training_args.save_steps = 1e5
     training_args.task = task
-
     if not use_selective and not use_sngp:
         if use_adapters:
             from transformers.adapters import AdapterTrainer
@@ -86,6 +85,8 @@ def get_trainer(
                     compute_metrics=metric_fn,
                 )
         else:
+            import os
+            os.environ['CUDA_VISIBLE_DEVICES'] = ''
             trainer = SelectiveTrainer(
                 model=model,
                 args=training_args,
@@ -122,7 +123,12 @@ class TrainingArgsWithLossCoefs(TrainingArguments):
     unc_threshold: Optional[float] = field(
         default=0.5, metadata={"help": "unc_threshold value for RAU loss."}
     )
-
+    no_cuda: Optional[bool] = field(
+        default=False, metadata={"help": "CUDA"}
+    )
+    xpu_backend: Optional[str] = field(
+        default='gloo', metadata={"help": "CPU Backend"}
+    )
 
 @dataclass
 @add_start_docstrings(TrainingArguments.__doc__)
