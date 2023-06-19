@@ -304,7 +304,8 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
     ################ Loading model #######################
     if config.get('adapters') and config.do_eval:
         checkpoint_dir = model_args['model_name_or_path'] 
-        model_args['model_name_or_path'] = 'microsoft/deberta-base'# TODO be careful set it up from the settings
+        # model_args['model_name_or_path'] = 'microsoft/deberta-base'# TODO be careful set it up from the settings
+
     model, tokenizer = create_model(num_labels, model_args, data_args, ue_args, config)
     ################ Adapters ############################
     if config.get('adapters'):
@@ -475,7 +476,7 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
         train_dataset,
         eval_dataset,
         metric_fn,
-        use_adapters=True if config.get('adapters') else False
+        use_adapters=True if config.get('adapters') else False,
     )
     if config.do_train:
         start = time.time()
@@ -542,7 +543,7 @@ def fix_config(config):
     config_name=get_config()[1],
 )
 def main(config):
-    os.environ["WANDB_WATCH"] = "False"  # To disable Huggingface logging
+    os.environ["WANDB_WATCH"] = "True"  # To disable Huggingface logging
     auto_generated_dir = os.getcwd()
     log.info(f"Work dir: {auto_generated_dir}")
     os.chdir(hydra.utils.get_original_cwd())
