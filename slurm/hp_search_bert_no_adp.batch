@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH --job-name=ue_hp_no_adp
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=128gb
+#SBATCH --gres=gpu:1
+
+#Pick a random or predefined port
+port=$(shuf -i 6000-9999 -n 1)
+echo "port is $port"
+
+#Start the notebook
+srun --container-image=artifactory.mts.ai#ml-docker/ue_transformers \
+--container-name=ue_transformers \
+--no-container-entrypoint \
+--container-workdir=/home \
+bash /home/dsgalimzya/uncertainty_transformers/scripts/ue_scripts/bert_hp_search_no_adp.sh

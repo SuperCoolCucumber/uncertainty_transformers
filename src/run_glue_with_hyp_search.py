@@ -57,9 +57,7 @@ from utils.utils_train import get_trainer
 from utils.utils_data import split_dataset
 import mlflow
 
-from ue4nlp.transformers_regularized import (
-    SelectiveTrainer, SelectiveSNGPTrainer
-)
+from ue4nlp.transformers_regularized import SelectiveTrainer, SelectiveSNGPTrainer
 from utils.utils_tasks import get_config
 from utils.utils_heads import change_attention_params
 import logging
@@ -181,6 +179,7 @@ def calculate_dropouts(model):
 
     return res
 
+
 def compute_metrics(is_regression, metric, accuracy_metric, p: EvalPrediction):
     preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
     preds = np.squeeze(preds) if is_regression else np.argmax(preds, axis=1)
@@ -191,6 +190,7 @@ def compute_metrics(is_regression, metric, accuracy_metric, p: EvalPrediction):
     if len(result) > 1:
         result["combined_score"] = np.mean(list(result.values())).item()
     return result
+
 
 def reset_params(model: torch.nn.Module):
     for layer in model.children():
@@ -257,7 +257,7 @@ def do_predict_eval(
         )
 
         ue_estimator.fit_ue(X=train_dataset, X_test=eval_dataset)
-        
+
         ue_results = ue_estimator(eval_dataset, true_labels)
         eval_results.update(ue_results)
 
@@ -266,6 +266,7 @@ def do_predict_eval(
 
     if wandb.run is not None:
         wandb.save(str(Path(work_dir) / "dev_inference.json"))
+
 
 def train_eval_glue_model(config, training_args, data_args, work_dir):
     ue_args = config.ue
@@ -295,14 +296,15 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
 
     ################ Loading model #######################
 
-    if config.get('adapters'):
-        checkpoint_dir = model_args['model_name_or_path'] 
-        model, tokenizer = create_model(num_labels, model_args, data_args, ue_args, config)
-    model_args['model_name_or_path'] = 'microsoft/deberta-base'# TODO be careful set it up from the settings
+    # if config.get('adapters'):
+    #     checkpoint_dir = model_args['model_name_or_path']
+
+    model, tokenizer = create_model(num_labels, model_args, data_args, ue_args, config)
+    # model_args['model_name_or_path'] = 'microsoft/deberta-base'# TODO be careful set it up from the settings
+    model_args["model_name_or_path"] = config.get("model_name_or_path")
 
     ################ Adapters ############################
-    if config.get('adapters'):
-
+    if config.get("adapters"):
         adapter_config = hydra.utils.instantiate(config.adapters.args)
         model.add_adapter(config.adapters.name, config=adapter_config)
         model.train_adapter(config.adapters.name)
@@ -406,10 +408,10 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
         log.info(f"Training dataset size: {len(train_dataset)}")
 
     # always load eval_dataset because we use it for metrics calc
-    validation_name = 'validation' if data_args.task_name!='mnli' else config.data.validation_name
-    eval_dataset = (
-        datasets[validation_name]
+    validation_name = (
+        "validation" if data_args.task_name != "mnli" else config.data.validation_name
     )
+    eval_dataset = datasets[validation_name]
 
     use_sngp = ue_args.ue_type == "sngp"
     use_selective = "use_selective" in ue_args.keys() and ue_args.use_selective
@@ -424,9 +426,11 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
         )
     is_regression = False
 
-    accuracy_metric = load_metric("accuracy", keep_in_memory=True, cache_dir=config.cache_dir)
+    accuracy_metric = load_metric(
+        "accuracy", keep_in_memory=True, cache_dir=config.cache_dir
+    )
     metric_glue = deepcopy(metric)
-    metric = config.metric if 'metric' in config.keys() else metric
+    metric = config.metric if "metric" in config.keys() else metric
     metric_fn = lambda p: compute_metrics(is_regression, metric, accuracy_metric, p)
 
     #################### Hyperparameter Search ##########################
@@ -435,7 +439,7 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
         hp_train_dataset, hp_eval_dataset = split_dataset(
             train_dataset, train_size=0.8, shuffle=True, seed=config.seed
         )
-        training_args.seed=config.seed
+        training_args.seed = config.seed
         trainer = get_trainer(
             "cls",
             use_selective,
@@ -444,13 +448,15 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
             training_args,
             hp_train_dataset,
             hp_eval_dataset,
-            metric_fn
+            metric_fn,
         )
         # TODO: add config.hyperparameter_search: bool
         # Model init fn is required for hyperperameter search
-        if ue_args.ue_type == 'sngp':
+        if ue_args.ue_type == "sngp":
             model_state_dict = deepcopy(model.state_dict())
-            model_copy, _ = create_model(num_labels, model_args, data_args, ue_args, config)
+            model_copy, _ = create_model(
+                num_labels, model_args, data_args, ue_args, config
+            )
             model_copy.load_state_dict(model_state_dict)
         else:
             model_copy = deepcopy(model)
@@ -463,15 +469,21 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
 
             model_init = lambda trial: update_model(trial, model_copy)
         elif ue_args.ue_type == "sto":
+
             def update_model(trial, model_copy):
                 params = SimpleNamespace(**trial.params)
-                model_copy = change_attention_params(model_copy, params, ue_args.sto_layer)
+                model_copy = change_attention_params(
+                    model_copy, params, ue_args.sto_layer
+                )
                 return deepcopy(model_copy)
+
             model_init = lambda trial: update_model(trial, model_copy)
-        elif ue_args.ue_type == 'sngp':
+        elif ue_args.ue_type == "sngp":
+
             def model_init(x):
                 model_copy.load_state_dict(model_state_dict)
                 return model_copy
+
         else:
             model_init = lambda x: deepcopy(model_copy)
         # Get optimal hyperparams
@@ -516,7 +528,7 @@ def train_eval_glue_model(config, training_args, data_args, work_dir):
 
     #################### Predicting ##########################
 
-    log.info('******** Started prediction ********')
+    log.info("******** Started prediction ********")
     if config.do_eval or config.do_ue_estimate:
         do_predict_eval(
             model,
@@ -598,6 +610,7 @@ def main(config):
         log.info(
             f"Result file: {auto_generated_dir}/dev_inference.json already exists \n"
         )
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,7 @@
+cd /home/dsgalimzya/uncertainty_transformers/src
+
+# bottleneck adapter, pfeiffer config
+HYDRA_CONFIG_PATH=../configs/run_train_models.yaml python ./run_train_models.py cuda_devices=[0] args='ue\=mc do_ue_estimate\=False ue.use_selective\=True ue.calibrate\=False ue.reg_type\=metric +ue.use_spectralnorm\=False data.validation_subsample\=0.0 model.model_name_or_path\=bert-base-uncased training\=electra_base training.num_train_epochs\=100 training.learning_rate\=1e-04 training.per_device_train_batch_size\=8 +training.weight_decay\=0.1 +ue.margin\=2.5 +ue.lamb_intra\=0.005 ue.lamb\=0.003 +ue.use_paper_version\=True +adapters.name\=bottleneck_adapter +adapters.args._target_\=transformers.adapters.PfeifferConfig' task_configs=cola.yaml output_dir=../workdir/run_train_models_pfeiffer/bert/cola/0.0
+
+# bottleneck adapter, houlsby config
+HYDRA_CONFIG_PATH=../configs/run_train_models.yaml python ./run_train_models.py cuda_devices=[0] args='ue\=mc do_ue_estimate\=False ue.use_selective\=True ue.calibrate\=False ue.reg_type\=metric +ue.use_spectralnorm\=False data.validation_subsample\=0.0 model.model_name_or_path\=bert-base-uncased training\=electra_base training.num_train_epochs\=100 training.learning_rate\=1e-04 training.per_device_train_batch_size\=8 +training.weight_decay\=0.1 +ue.margin\=2.5 +ue.lamb_intra\=0.005 ue.lamb\=0.003 +ue.use_paper_version\=True +adapters.name\=bottleneck_adapter +adapters.args._target_\=transformers.adapters.HoulsbyConfig' task_configs=cola.yaml output_dir=../workdir/run_train_models_houlsby/bert/cola/0.0
