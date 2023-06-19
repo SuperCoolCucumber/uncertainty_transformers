@@ -25,7 +25,7 @@ def init_wandb(directory, config):
     # setting up env variables
     # os.environ["WANDB_ENTITY"] = "artem105"
     os.environ["WANDB_PROJECT"] = "uncertainty-estimation"
-    os.environ["WANDB_DISABLED"] = "true"
+    # os.environ["WANDB_DISABLED"] = "true"
 
     # generating group name and run name
     directory_contents = directory.split("/")
@@ -44,9 +44,8 @@ def init_wandb(directory, config):
         group=group_name,
         name=run_name,
         config=config,
-        #mode="offline",
+        mode="online",
         job_type="train",
         force=True,
         tags=[strat_name, model_name, task],
-        mode="offline",
     )
